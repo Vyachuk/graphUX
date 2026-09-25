@@ -4,31 +4,45 @@ import type { GraphFlowEdge } from './GraphEdge';
 import { registry } from './entities/registry';
 import type { NavState } from './navigation';
 
-/** ADR-0012: скільки кроків від фокуса лишаються розгорнутими — назад (предки) і вперед (нащадки). */
-export const EXPAND_BACK = 1;
-export const EXPAND_FORWARD = 3;
-/** Камера показує лише найближчих сусідів, щоб картки лишались читабельними. */
-export const CAMERA_RADIUS = 1;
+/** ADR-0012: скільки карток на шляху навколо фокуса завжди розгорнуто (разом із фокусом). */
+export const FOCUS_WINDOW = 4;
+/** Мінімум кроків назад у вікні (якщо є куди). */
+export const MIN_BACK = 1;
+/** Скільки кроків уперед вікно бере в першу чергу, решту добирає назад. */
+export const PREFER_FORWARD = 2;
+
+/** Шлях уперед від фокуса: щоразу остання відкрита гілка (так само, як клавіша →). */
+function forwardChain(state: NavState, key: string): string[] {
+  const chain: string[] = [];
+  for (let k = state.nodes[key].children.at(-1); k; k = state.nodes[k].children.at(-1)) chain.push(k);
+  return chain;
+}
+
+/** Предки фокуса від найближчого. */
+function ancestors(state: NavState, key: string): string[] {
+  const up: string[] = [];
+  for (let k = state.nodes[key].parent; k; k = state.nodes[k].parent) up.push(k);
+  return up;
+}
 
 /**
- * Правило згортання (ADR-0012, узагальнює ADR-0009 і ADR-0003): розгорнуті фокус,
- * `back` предків, нащадки фокуса до глибини `forward` і сестри фокуса. Решта — іконки.
+ * Правило згортання (ADR-0012): вікно з FOCUS_WINDOW карток на шляху навколо фокуса —
+ * мінімум MIN_BACK назад, до PREFER_FORWARD уперед, решту добираємо з того боку, де є куди.
+ * Додатково розгорнуті сестри й діти фокуса (гілки з ADR-0009). Решта — іконки.
  */
-export function expandedKeys(state: NavState, back = EXPAND_BACK, forward = EXPAND_FORWARD): Set<string> {
+export function expandedKeys(state: NavState, window = FOCUS_WINDOW): Set<string> {
   const focus = state.nodes[state.focus];
-  const keys = new Set([focus.key]);
+  const up = ancestors(state, focus.key);
+  const down = forwardChain(state, focus.key);
+  const slots = window - 1;
 
-  let up = focus.parent;
-  for (let i = 0; i < back && up; i++, up = state.nodes[up].parent) keys.add(up);
+  let back = Math.min(up.length, MIN_BACK, slots);
+  let fwd = Math.min(down.length, PREFER_FORWARD, slots - back);
+  back = Math.min(up.length, slots - fwd);
+  fwd = Math.min(down.length, slots - back);
 
-  const down = (key: string, depth: number) => {
-    if (depth > forward) return;
-    keys.add(key);
-    state.nodes[key].children.forEach((c) => down(c, depth + 1));
-  };
-  focus.children.forEach((c) => down(c, 1));
-
-  if (focus.parent && back > 0) state.nodes[focus.parent].children.forEach((k) => keys.add(k));
+  const keys = new Set([focus.key, ...up.slice(0, back), ...down.slice(0, fwd), ...focus.children]);
+  if (focus.parent) state.nodes[focus.parent].children.forEach((k) => keys.add(k));
   return keys;
 }
 
@@ -100,5 +114,5 @@ export function buildGraph(state: NavState, heights: Heights = {}) {
   };
   place(state.root, 0);
 
-  return { nodes, edges, expanded, camera: expandedKeys(state, CAMERA_RADIUS, CAMERA_RADIUS), complete };
+  return { nodes, edges, expanded, camera: expanded, complete };
 }

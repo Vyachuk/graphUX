@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { registry } from './entities/registry';
-import { buildGraph, CAMERA_RADIUS, COLLAPSED, ESTIMATE, EXPAND_BACK, EXPAND_FORWARD, expandedKeys, GAP, GAP_Y, heightKey } from './layout';
+import { buildGraph, COLLAPSED, ESTIMATE, expandedKeys, FOCUS_WINDOW, GAP, GAP_Y, heightKey } from './layout';
 import { initialNav, navReducer, type NavAction } from './navigation';
 
 const run = (...actions: NavAction[]) => actions.reduce(navReducer, initialNav);
@@ -14,35 +14,43 @@ const pattern = (s: typeof chain) => {
   return Object.keys(s.nodes).map((k) => (e.has(k) ? '■' : '●')).join('');
 };
 
-describe('expandedKeys (ADR-0012: 1 крок назад і 3 вперед)', () => {
-  it('на ланцюжку розгорнуто 1 крок назад і 3 вперед від фокуса', () => {
-    expect([EXPAND_BACK, EXPAND_FORWARD]).toEqual([1, 3]);
-    expect(pattern(chain)).toBe('●●●■■'); // фокус n4: лише батько n3
-    expect(pattern(navReducer(chain, { kind: 'focus', key: 'n1' }))).toBe('■■■■■'); // n0 назад, n2–n4 вперед
-    expect(pattern(navReducer(chain, { kind: 'focus', key: 'n0' }))).toBe('■■■■●'); // n4 — 4 кроки вперед
+describe('expandedKeys (ADR-0012: вікно з 4 карток)', () => {
+  // довгий ланцюжок n0…n8
+  const long = [['n4', 'dish', 'd1'], ['n5', 'person', 'p2'], ['n6', 'restaurant', 'r2'], ['n7', 'city', 'kyiv']].reduce(
+    (s, [from, type, id]) => navReducer(s, open(from, type as 'dish', id)),
+    chain,
+  );
+  const at = (key: string) => pattern(navReducer(long, { kind: 'focus', key }));
+
+  it('завжди рівно 4 розгорнуті на ланцюжку', () => {
+    expect(FOCUS_WINDOW).toBe(4);
+    for (let i = 0; i <= 8; i++) expect(at(`n${i}`).split('■').length - 1).toBe(4);
   });
 
-  it('довгий ланцюжок: 2-й крок назад і 4-й уперед згорнуті', () => {
-    // n0…n8, фокус посередині (n4)
-    let s = chain;
-    for (const [from, type, id] of [['n4', 'dish', 'd1'], ['n5', 'person', 'p2'], ['n6', 'restaurant', 'r2'], ['n7', 'city', 'kyiv']] as const) {
-      s = navReducer(s, open(from, type, id));
-    }
-    s = navReducer(s, { kind: 'focus', key: 'n4' });
-    expect(pattern(s)).toBe('●●●■■■■■●');
+  it('йдеш уперед (фокус останній) — 3 назад + фокус', () => {
+    expect(at('n8')).toBe('●●●●●■■■■');
   });
 
-  it('сестри фокуса розгорнуті, діти сестер — ні', () => {
+  it('посередині — 1 назад, фокус, 2 вперед', () => {
+    expect(at('n4')).toBe('●●●■■■■●●');
+  });
+
+  it('біля кінця вікно добирає назад, біля кореня — вперед', () => {
+    expect(at('n7')).toBe('●●●●●■■■■'); // n5 n6 назад, фокус n7, n8 вперед
+    expect(at('n0')).toBe('■■■■●●●●●');
+  });
+
+  it('сестри й діти фокуса розгорнуті понад вікно', () => {
     // з Реберні на Узвозі (n2) відкриваємо ще й місто → n5, сестра n3
     const s = navReducer(chain, open('n2', 'city', 'kyiv'));
     const e = expandedKeys(s);
-    expect([...e].sort()).toEqual(['n2', 'n3', 'n5']);
+    expect([...e].sort()).toEqual(['n0', 'n1', 'n2', 'n3', 'n5']);
     expect(e.has('n4')).toBe(false);
   });
 
-  it('камера — лише ±1 від фокуса', () => {
-    expect([...buildGraph(chain).camera].sort()).toEqual(['n3', 'n4']);
-    expect(CAMERA_RADIUS).toBe(1);
+  it('камера показує всі розгорнуті', () => {
+    const g = buildGraph(chain);
+    expect(g.camera).toEqual(g.expanded);
   });
 });
 
@@ -50,9 +58,11 @@ describe('buildGraph (ADR-0009)', () => {
   it('x — за колонками глибини, з найширшою нодою колонки', () => {
     const { nodes } = buildGraph(chain);
     const xs = nodes.map((n) => n.position.x);
-    // фокус n4: розгорнутий лише батько n3, n0–n2 — іконки
-    const step = COLLAPSED + GAP;
-    expect(xs).toEqual([0, step, 2 * step, 3 * step, 3 * step + registry.dish.width + GAP]);
+    // фокус n4: вікно n1–n4, n0 — іконка
+    const x1 = COLLAPSED + GAP;
+    const x2 = x1 + registry.person.width + GAP;
+    const x3 = x2 + registry.restaurant.width + GAP;
+    expect(xs).toEqual([0, x1, x2, x3, x3 + registry.dish.width + GAP]);
   });
 
   it('друга гілка з тієї ж ноди стоїть ПІД першою, з урахуванням виміряних висот', () => {
