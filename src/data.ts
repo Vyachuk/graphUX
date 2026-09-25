@@ -50,7 +50,7 @@ export type Dish = {
 export type Ingredient = {
   id: string;
   name: string;
-  category: 'Овочі' | 'Фрукти' | 'Молочне' | 'Риба' | 'Бакалія' | 'Інше';
+  category: 'Овочі' | 'Фрукти' | 'Молочне' | 'Мʼясо' | 'Риба' | 'Бакалія' | 'Інше';
   allergen: boolean;
 };
 
@@ -92,6 +92,7 @@ export const cities: City[] = [
   { id: 'odesa', name: 'Одеса', countryId: 'ua', population: 1_010_000 },
   { id: 'warsaw', name: 'Варшава', countryId: 'pl', population: 1_860_000 },
   { id: 'krakow', name: 'Краків', countryId: 'pl', population: 800_000 },
+  { id: 'lodz', name: 'Лодзь', countryId: 'pl', population: 650_000 },
 ];
 
 export const companies: Company[] = [
@@ -101,16 +102,18 @@ export const companies: Company[] = [
   { id: 'c4', name: 'Wawel Soft', industry: 'Fintech', founded: 2017, cityId: 'krakow' },
 ];
 
+// Реальні заклади «!FEST Холдинг емоцій» — назви й адреси з fest.lviv.ua (ADR-0011).
+// Рейтинги та рівень цін — мок-дані.
 export const restaurants: Restaurant[] = [
-  { id: 'r1', name: 'Kanapa', cuisine: 'Українська', rating: 4.7, priceLevel: 3, cityId: 'kyiv', address: 'Андріївський узвіз, 19' },
-  { id: 'r2', name: 'Baczewski', cuisine: 'Галицька', rating: 4.8, priceLevel: 3, cityId: 'lviv', address: 'вул. Шевська, 8' },
-  { id: 'r3', name: 'Dacha', cuisine: 'Домашня', rating: 4.6, priceLevel: 2, cityId: 'odesa', address: 'Французький бульвар, 85' },
-  { id: 'r4', name: 'Sushi Master', cuisine: 'Японська', rating: 4.2, priceLevel: 2, cityId: 'kyiv', address: 'вул. Хрещатик, 22' },
-  { id: 'r5', name: 'Pod Baranem', cuisine: 'Польська', rating: 4.5, priceLevel: 2, cityId: 'krakow', address: 'ul. Świętej Gertrudy, 21' },
-  { id: 'r6', name: 'Stary Dom', cuisine: 'Польська', rating: 4.4, priceLevel: 3, cityId: 'warsaw', address: 'ul. Puławska, 104' },
-  { id: 'r7', name: 'Реберня', cuisine: 'Гриль', rating: 4.6, priceLevel: 3, cityId: 'lviv', address: 'пл. Ринок, 18' },
-  { id: 'r8', name: 'Пʼяна вишня', cuisine: 'Бар', rating: 4.7, priceLevel: 2, cityId: 'lviv', address: 'пл. Ринок, 11' },
-  { id: 'r9', name: 'ВСЛ', cuisine: 'Українська', rating: 4.5, priceLevel: 2, cityId: 'lviv', address: 'вул. Друкарська, 6' },
+  { id: 'r1', name: 'Реберня на Узвозі', cuisine: 'Реберця на відкритому вогні', rating: 4.7, priceLevel: 3, cityId: 'kyiv', address: 'Андріївський узвіз, 2а' },
+  { id: 'r2', name: 'Львівська копальня кави', cuisine: 'Кавʼярня', rating: 4.8, priceLevel: 2, cityId: 'lviv', address: 'пл. Ринок, 10' },
+  { id: 'r3', name: 'Криївка', cuisine: 'Українська', rating: 4.6, priceLevel: 2, cityId: 'lviv', address: 'пл. Ринок (точна адреса — таємниця, вхід за паролем)' },
+  { id: 'r4', name: 'Pravda. Craft Beer & Friends', cuisine: 'Крафтове пиво', rating: 4.5, priceLevel: 2, cityId: 'lviv', address: 'пл. Ринок, 32' },
+  { id: 'r5', name: 'Rebernia Łódź', cuisine: 'Реберця та крафт', rating: 4.5, priceLevel: 2, cityId: 'lodz', address: 'ul. Drewnowska, 58' },
+  { id: 'r6', name: 'Гасова лямпа', cuisine: 'Ресторація-музей', rating: 4.4, priceLevel: 3, cityId: 'lviv', address: 'вул. Вірменська, 20' },
+  { id: 'r7', name: 'Реберня', cuisine: 'Реберця на відкритому вогні', rating: 4.6, priceLevel: 3, cityId: 'lviv', address: 'вул. Підвальна, 5' },
+  { id: 'r8', name: 'Пʼяна вишня', cuisine: 'Моно-заклад вишнівки', rating: 4.7, priceLevel: 2, cityId: 'lviv', address: 'пл. Ринок, 11' },
+  { id: 'r9', name: 'Львівська майстерня шоколаду', cuisine: 'Шоколад ручної роботи', rating: 4.8, priceLevel: 2, cityId: 'lviv', address: 'вул. Сербська, 3' },
 ];
 
 export const ingredients: Ingredient[] = [
@@ -124,28 +127,28 @@ export const ingredients: Ingredient[] = [
   { id: 'sourcream', name: 'Сметана', category: 'Молочне', allergen: true },
   { id: 'cottage', name: 'Сир кисломолочний', category: 'Молочне', allergen: true },
   { id: 'butter', name: 'Масло', category: 'Молочне', allergen: true },
-  { id: 'creamcheese', name: 'Крем-сир', category: 'Молочне', allergen: true },
+  { id: 'pork', name: 'Свинячі реберця', category: 'Мʼясо', allergen: false },
   { id: 'herring', name: 'Оселедець', category: 'Риба', allergen: true },
-  { id: 'salmon', name: 'Лосось', category: 'Риба', allergen: true },
   { id: 'flour', name: 'Борошно', category: 'Бакалія', allergen: true },
-  { id: 'rice', name: 'Рис', category: 'Бакалія', allergen: false },
   { id: 'sugar', name: 'Цукор', category: 'Бакалія', allergen: false },
+  { id: 'coffee', name: 'Кава', category: 'Бакалія', allergen: false },
+  { id: 'chocolate', name: 'Шоколад', category: 'Бакалія', allergen: true },
   { id: 'egg', name: 'Яйце', category: 'Інше', allergen: true },
   { id: 'honey', name: 'Мед', category: 'Інше', allergen: false },
 ];
 
 export const dishes: Dish[] = [
-  { id: 'd1', name: 'Борщ з пампушками', price: 240, restaurantId: 'r1', ingredientIds: ['beet', 'cabbage', 'garlic', 'sourcream', 'flour'] },
-  { id: 'd2', name: 'Вареники з вишнею', price: 210, restaurantId: 'r1', ingredientIds: ['flour', 'cherry', 'sugar'] },
-  { id: 'd3', name: 'Деруни', price: 190, restaurantId: 'r2', ingredientIds: ['potato', 'onion', 'sourcream', 'egg'] },
-  { id: 'd4', name: 'Сирники', price: 170, restaurantId: 'r2', ingredientIds: ['cottage', 'egg', 'flour', 'honey'] },
-  { id: 'd5', name: 'Форшмак', price: 230, restaurantId: 'r3', ingredientIds: ['herring', 'apple', 'butter', 'onion'] },
-  { id: 'd6', name: 'Філадельфія рол', price: 320, restaurantId: 'r4', ingredientIds: ['salmon', 'rice', 'creamcheese'] },
-  { id: 'd7', name: 'Пероги руські', price: 38, restaurantId: 'r5', ingredientIds: ['flour', 'potato', 'cottage', 'onion'] },
-  { id: 'd8', name: 'Бігос', price: 45, restaurantId: 'r6', ingredientIds: ['cabbage', 'onion', 'apple'] },
-  { id: 'd9', name: 'Реберця BBQ', price: 390, restaurantId: 'r7', ingredientIds: ['onion', 'garlic', 'honey'] },
+  { id: 'd1', name: 'Реберця BBQ', price: 420, restaurantId: 'r1', ingredientIds: ['pork', 'garlic', 'honey', 'onion'] },
+  { id: 'd2', name: 'Борщ з пампушками', price: 190, restaurantId: 'r1', ingredientIds: ['beet', 'cabbage', 'garlic', 'sourcream', 'flour'] },
+  { id: 'd3', name: 'Кава «з копальні» з вогнем', price: 110, restaurantId: 'r2', ingredientIds: ['coffee', 'sugar'] },
+  { id: 'd4', name: 'Львівський сирник', price: 120, restaurantId: 'r2', ingredientIds: ['cottage', 'egg', 'flour', 'sugar'] },
+  { id: 'd5', name: 'Деруни з мʼясом', price: 210, restaurantId: 'r3', ingredientIds: ['potato', 'onion', 'pork', 'sourcream'] },
+  { id: 'd6', name: 'Оселедець з картоплею', price: 160, restaurantId: 'r4', ingredientIds: ['herring', 'potato', 'onion'] },
+  { id: 'd7', name: 'Żeberka BBQ', price: 69, restaurantId: 'r5', ingredientIds: ['pork', 'honey', 'garlic'] },
+  { id: 'd8', name: 'Штрудель з яблуком', price: 150, restaurantId: 'r6', ingredientIds: ['apple', 'flour', 'sugar', 'butter'] },
+  { id: 'd9', name: 'Реберця на відкритому вогні', price: 390, restaurantId: 'r7', ingredientIds: ['pork', 'garlic', 'honey'] },
   { id: 'd10', name: 'Вишнівка з сирником', price: 150, restaurantId: 'r8', ingredientIds: ['cherry', 'cottage', 'sugar'] },
-  { id: 'd11', name: 'Вареники з картоплею', price: 180, restaurantId: 'r9', ingredientIds: ['flour', 'potato', 'onion', 'sourcream'] },
+  { id: 'd11', name: 'Цукерки з вишнею', price: 140, restaurantId: 'r9', ingredientIds: ['chocolate', 'cherry', 'sugar'] },
 ];
 
 export const people: Person[] = [
@@ -162,23 +165,23 @@ export const people: Person[] = [
 export const events: Event[] = [
   { id: 'e1', name: 'Kyiv Food Fest', date: '2026-10-12', cityId: 'kyiv', venueId: 'r1', organizerId: 'c1', attendeeIds: ['p1', 'p4', 'p6'] },
   { id: 'e2', name: 'Lviv Coffee Days', date: '2026-11-03', cityId: 'lviv', venueId: 'r2', organizerId: 'c2', attendeeIds: ['p2', 'p5'] },
-  { id: 'e3', name: 'Odesa Data Meetup', date: '2026-10-28', cityId: 'odesa', venueId: 'r3', organizerId: 'c3', attendeeIds: ['p3', 'p1', 'p5'] },
-  { id: 'e4', name: 'Kraków Dev Dinner', date: '2026-12-05', cityId: 'krakow', venueId: 'r5', organizerId: 'c4', attendeeIds: ['p7', 'p2', 'p8'] },
+  { id: 'e3', name: 'Lviv Data Meetup', date: '2026-10-28', cityId: 'lviv', venueId: 'r3', organizerId: 'c3', attendeeIds: ['p3', 'p1', 'p5'] },
+  { id: 'e4', name: 'Łódź Dev Dinner', date: '2026-12-05', cityId: 'lodz', venueId: 'r5', organizerId: 'c4', attendeeIds: ['p7', 'p2', 'p8'] },
 ];
 
 export const reviews: Review[] = [
-  { id: 'rv1', authorId: 'p1', restaurantId: 'r1', rating: 5, text: 'Найкращі вареники з вишнею в місті.', date: '2026-08-14' },
-  { id: 'rv2', authorId: 'p6', restaurantId: 'r1', rating: 4, text: 'Борщ бездоганний, але довго чекали столик.', date: '2026-07-02' },
-  { id: 'rv3', authorId: 'p2', restaurantId: 'r2', rating: 5, text: 'Атмосфера старого Львова і чудові деруни.', date: '2026-06-21' },
-  { id: 'rv4', authorId: 'p5', restaurantId: 'r2', rating: 4, text: 'Сирники — топ. Ціни трохи кусаються.', date: '2026-09-01' },
-  { id: 'rv5', authorId: 'p3', restaurantId: 'r3', rating: 5, text: 'Форшмак як у бабусі, тераса — магія.', date: '2026-08-30' },
-  { id: 'rv6', authorId: 'p4', restaurantId: 'r4', rating: 3, text: 'Швидко, але рис переварений.', date: '2026-09-10' },
-  { id: 'rv7', authorId: 'p7', restaurantId: 'r5', rating: 5, text: 'Pierogi ruskie jak u mamy.', date: '2026-05-17' },
-  { id: 'rv8', authorId: 'p2', restaurantId: 'r5', rating: 4, text: 'Був у відрядженні — пероги варті поїздки.', date: '2026-09-12' },
-  { id: 'rv9', authorId: 'p8', restaurantId: 'r6', rating: 4, text: 'Solidny bigos, dobra obsługa.', date: '2026-08-08' },
+  { id: 'rv1', authorId: 'p1', restaurantId: 'r1', rating: 5, text: 'Найкращий борщ на Узвозі, а реберця — окрема любов.', date: '2026-08-14' },
+  { id: 'rv2', authorId: 'p6', restaurantId: 'r1', rating: 4, text: 'Реберця бездоганні, але у вихідні довго чекали столик.', date: '2026-07-02' },
+  { id: 'rv3', authorId: 'p2', restaurantId: 'r2', rating: 5, text: 'Каву «видобувають» з підземелля і підпалюють — видовищно й смачно.', date: '2026-06-21' },
+  { id: 'rv4', authorId: 'p5', restaurantId: 'r2', rating: 4, text: 'Сирник — топ. У копальні трохи тісно.', date: '2026-09-01' },
+  { id: 'rv5', authorId: 'p3', restaurantId: 'r3', rating: 5, text: 'Пароль на вході, деруни як у бабусі.', date: '2026-08-30' },
+  { id: 'rv6', authorId: 'p4', restaurantId: 'r4', rating: 3, text: 'Крафт чудовий, але під час концерту дуже гучно.', date: '2026-09-10' },
+  { id: 'rv7', authorId: 'p7', restaurantId: 'r5', rating: 5, text: 'Żeberka jak we Lwowie — polecam.', date: '2026-05-17' },
+  { id: 'rv8', authorId: 'p2', restaurantId: 'r5', rating: 4, text: 'Був у Лодзі у відрядженні — реберця варті поїздки.', date: '2026-09-12' },
+  { id: 'rv9', authorId: 'p8', restaurantId: 'r6', rating: 4, text: 'Lampy naftowe robią klimat, strudel świetny.', date: '2026-08-08' },
   { id: 'rv10', authorId: 'p5', restaurantId: 'r7', rating: 5, text: 'Реберця з гонгом — must visit.', date: '2026-07-19' },
   { id: 'rv11', authorId: 'p2', restaurantId: 'r8', rating: 4, text: 'Класика Ринку, завжди черга.', date: '2026-08-02' },
-  { id: 'rv12', authorId: 'p5', restaurantId: 'r9', rating: 4, text: 'Чесні домашні вареники.', date: '2026-09-05' },
+  { id: 'rv12', authorId: 'p5', restaurantId: 'r9', rating: 4, text: 'Гарячий шоколад і цукерки з вишнею — бомба.', date: '2026-09-05' },
 ];
 
 const byId = <T extends { id: string }>(list: T[]) => (id: string) => {

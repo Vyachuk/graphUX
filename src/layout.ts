@@ -4,18 +4,31 @@ import type { GraphFlowEdge } from './GraphEdge';
 import { registry } from './entities/registry';
 import type { NavState } from './navigation';
 
+/** ADR-0012: скільки кроків від фокуса лишаються розгорнутими — назад (предки) і вперед (нащадки). */
+export const EXPAND_BACK = 1;
+export const EXPAND_FORWARD = 3;
+/** Камера показує лише найближчих сусідів, щоб картки лишались читабельними. */
+export const CAMERA_RADIUS = 1;
+
 /**
- * Правило згортання (ADR-0009, узагальнює ADR-0003): розгорнуті фокус, його батько,
- * сестри фокуса і діти фокуса. Дідусь і онуки — іконки.
+ * Правило згортання (ADR-0012, узагальнює ADR-0009 і ADR-0003): розгорнуті фокус,
+ * `back` предків, нащадки фокуса до глибини `forward` і сестри фокуса. Решта — іконки.
  */
-export function expandedKeys(state: NavState): Set<string> {
+export function expandedKeys(state: NavState, back = EXPAND_BACK, forward = EXPAND_FORWARD): Set<string> {
   const focus = state.nodes[state.focus];
-  const keys = new Set([focus.key, ...focus.children]);
-  if (focus.parent) {
-    const parent = state.nodes[focus.parent];
-    keys.add(parent.key);
-    parent.children.forEach((k) => keys.add(k));
-  }
+  const keys = new Set([focus.key]);
+
+  let up = focus.parent;
+  for (let i = 0; i < back && up; i++, up = state.nodes[up].parent) keys.add(up);
+
+  const down = (key: string, depth: number) => {
+    if (depth > forward) return;
+    keys.add(key);
+    state.nodes[key].children.forEach((c) => down(c, depth + 1));
+  };
+  focus.children.forEach((c) => down(c, 1));
+
+  if (focus.parent && back > 0) state.nodes[focus.parent].children.forEach((k) => keys.add(k));
   return keys;
 }
 
@@ -87,5 +100,5 @@ export function buildGraph(state: NavState, heights: Heights = {}) {
   };
   place(state.root, 0);
 
-  return { nodes, edges, expanded, complete };
+  return { nodes, edges, expanded, camera: expandedKeys(state, CAMERA_RADIUS, CAMERA_RADIUS), complete };
 }

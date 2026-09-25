@@ -41,7 +41,7 @@ export const seedComments = (now = Date.now()): Comment[] => [
   { id: 'seed-1', target: 'report:r8', authorId: 'p3', text: 'Витрати на маркетинг 35% — чи не забагато для бару на Ринку?', createdAt: now - 26 * HOUR, likes: ['p5'] },
   { id: 'seed-2', target: 'report:r8', authorId: 'p2', text: 'Це сезонне: у лютому був фестиваль. Порівняйте з Березнем.', createdAt: now - 3 * HOUR, likes: ['p3', 'p1'] },
   { id: 'seed-3', target: 'person:p1', authorId: 'p6', text: 'Олена веде редизайн графа — питання по UX до неї 🙌', createdAt: now - 50 * 60_000, likes: [] },
-  { id: 'seed-4', target: 'restaurant:r1', authorId: 'p4', text: 'Забронював столик на Kyiv Food Fest.', createdAt: now - 5 * 24 * HOUR, likes: ['p1'] },
+  { id: 'seed-4', target: 'restaurant:r1', authorId: 'p4', text: 'Забронював столик на Узвозі під Kyiv Food Fest.', createdAt: now - 5 * 24 * HOUR, likes: ['p1'] },
 ];
 
 function load<T>(key: string, fallback: () => T): T {

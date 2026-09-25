@@ -6,7 +6,7 @@ const run = (...actions: NavAction[]) => actions.reduce(navReducer, initialNav);
 const label = (s: NavState, key: string) => `${s.nodes[key].ref.type}:${s.nodes[key].ref.id}`;
 const kids = (s: NavState, key: string) => s.nodes[key].children.map((k) => label(s, k));
 
-// people → Олена → Kanapa
+// people → Олена → Реберня на Узвозі
 const chain = run(
   { kind: 'open', from: 'n0', ref: person('p1'), via: 'row' },
   { kind: 'open', from: 'n1', ref: { type: 'restaurant', id: 'r1' }, via: 'loves' },

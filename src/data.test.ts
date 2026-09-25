@@ -57,8 +57,8 @@ describe('цілісність мок-даних', () => {
   });
 
   it('ціна у валюті країни ресторану', () => {
-    expect(db.formatPrice(db.getDish('d1'))).toBe('240 ₴');
-    expect(db.formatPrice(db.getDish('d7'))).toBe('38 zł');
+    expect(db.formatPrice(db.getDish('d1'))).toBe('420 ₴');
+    expect(db.formatPrice(db.getDish('d7'))).toBe('69 zł');
   });
 });
 

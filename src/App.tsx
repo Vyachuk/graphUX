@@ -75,7 +75,7 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
     });
   }, [nodes]);
 
-  // Камера показує розгорнуті ноди, щойно лейаут побудований з реальних висот.
+  // Камера показує фокус і найближчих сусідів (ADR-0012), щойно лейаут побудований з реальних висот.
   useEffect(() => {
     const synced =
       graph.complete &&
@@ -86,15 +86,15 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
       });
     if (!pendingFit.current || !synced) return;
     pendingFit.current = false;
-    fitView({ nodes: [...graph.expanded].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
+    fitView({ nodes: [...graph.camera].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
   }, [nodes, graph, fitView]);
 
-  // Нода змінила розмір без навігації (відкрили тред коментарів) — показуємо розгорнуті ноди заново.
-  const expandedRef = useRef(graph.expanded);
-  expandedRef.current = graph.expanded;
+  // Нода змінила розмір без навігації (відкрили тред коментарів) — показуємо фокус і сусідів заново.
+  const cameraRef = useRef(graph.camera);
+  cameraRef.current = graph.camera;
   useEffect(() => {
     const refit = () =>
-      fitView({ nodes: [...expandedRef.current].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
+      fitView({ nodes: [...cameraRef.current].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
     window.addEventListener(REFIT_EVENT, refit);
     return () => window.removeEventListener(REFIT_EVENT, refit);
   }, [fitView]);
