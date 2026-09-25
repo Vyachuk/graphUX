@@ -1,0 +1,341 @@
+/* Темна «скляна» тема з Figma GraphUX-Team (ADR-0008). */
+:root {
+  --bg: linear-gradient(-60.48deg, #1e3740 17.42%, #001522 109.96%);
+  --bg-solid: #0c2530;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-border: rgba(255, 255, 255, 0.15);
+  --inset: rgba(255, 255, 255, 0.03);
+  --inset-border: rgba(255, 255, 255, 0.1);
+  --row: rgba(255, 255, 255, 0.02);
+  --row-border: rgba(255, 255, 255, 0.04);
+  --tile: rgba(156, 163, 175, 0.15);
+  --text: #ffffff;
+  --text-80: rgba(255, 255, 255, 0.8);
+  --text-60: rgba(255, 255, 255, 0.6);
+  --text-40: rgba(255, 255, 255, 0.4);
+  --text-30: rgba(255, 255, 255, 0.3);
+  --positive: #34d399;
+  --negative: #f87171;
+  --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-label: 'Onest', var(--font);
+  --font-chart: 'Inter', var(--font);
+  font-family: var(--font);
+  color: var(--text);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--bg-solid); background-image: var(--bg); }
+button { font: inherit; color: inherit; }
+
+/* ---------- Канвас ---------- */
+.react-flow { --xy-background-color: transparent; }
+.react-flow__renderer::after {
+  /* Внутрішня тінь рамки з Start page (47:1073). */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 27px rgb(0 0 0 / 0.7);
+}
+/* ADR-0004: плавне перестроювання при згортанні/розгортанні. */
+.react-flow__node { transition: transform 350ms ease; }
+.react-flow__handle { opacity: 0; top: 40px; }
+.graph-edge__label {
+  position: absolute; pointer-events: none;
+  font-size: 10px; color: var(--text-40);
+}
+.react-flow__controls { box-shadow: none; border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
+.react-flow__controls-button { background: var(--card); border-color: var(--card-border); backdrop-filter: blur(12px); }
+.react-flow__controls-button:hover { background: rgba(255, 255, 255, 0.12); }
+.react-flow__controls-button svg { fill: var(--text-80); }
+
+/* ---------- Картка (Figma 638:2318) ---------- */
+.entity-card, .entity-bare { position: relative; cursor: default; animation: pop-in 220ms ease; }
+.entity-card {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 21px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.entity-card.is-focused { border-color: rgba(52, 211, 153, 0.5); box-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
+.entity-card__divider {
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0));
+}
+.entity-card__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.entity-card__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.entity-card__title {
+  margin: 0; font-size: 14px; line-height: 20px; font-weight: 700; letter-spacing: 0.35px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.entity-card__subtitle { font-size: 12px; line-height: 16px; color: var(--text-40); }
+.entity-card__actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.entity-card__badge {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 16px;
+  background: rgba(255, 255, 255, 0.15);
+}
+.entity-card__close {
+  width: 28px; height: 28px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--text-40); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.entity-card__close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.entity-card__body { display: flex; flex-direction: column; }
+.entity-bare > .entity-card__close { position: absolute; top: 6px; right: 6px; z-index: 1; }
+.entity-bare.is-focused .fin-metric--highlighted { box-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- Згорнута нода (Figma 47:1085) ---------- */
+.entity-icon {
+  width: 72px; padding-top: 23px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; animation: pop-in 220ms ease;
+}
+.entity-icon__badge {
+  width: 33px; height: 33px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 16px;
+  background: var(--tile);
+  transition: transform 150ms ease, background 150ms;
+}
+.entity-icon .react-flow__handle-left { left: 19.5px; }
+.entity-icon .react-flow__handle-right { right: 19.5px; }
+.entity-icon:hover .entity-icon__badge { transform: scale(1.08); background: rgba(156, 163, 175, 0.25); }
+.entity-icon__label {
+  font-family: var(--font-label); font-size: 12px; line-height: 18px; color: var(--text-80);
+  text-align: center; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---------- Вміст сутностей ---------- */
+.section + .section { margin-top: 14px; }
+.section__title {
+  margin: 0 0 6px; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-40);
+}
+.section__body { display: flex; flex-direction: column; gap: 6px; }
+
+.field { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 16px; padding: 3px 0; }
+.field__label { color: var(--text-40); }
+.field__value { text-align: right; color: var(--text-80); }
+
+/* Рядок-посилання — як "Incoming (4)" у віджеті Email (Figma 47:1134). */
+.entity-link {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 11px 13px; font-size: 12px; line-height: 16px; text-align: left; color: var(--text-80);
+  background: var(--row); border: 1px solid var(--row-border); border-radius: 8px;
+  cursor: pointer; transition: background 120ms, border-color 120ms;
+}
+.entity-link:hover { background: rgba(255, 255, 255, 0.06); }
+.entity-link.is-active { border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.08); color: var(--text); }
+.entity-link__icon {
+  width: 28px; height: 28px; border-radius: 14px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 13px; background: var(--tile);
+}
+.entity-link__label { flex: 1; }
+.entity-link__arrow { color: var(--text-30); }
+
+.table-wrap { max-height: 440px; overflow: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; line-height: 16px; }
+.table th {
+  text-align: left; font-weight: 400; color: var(--text-40);
+  padding: 8px 10px; border-bottom: 1px solid var(--inset-border);
+  position: sticky; top: 0; background: #1b3039;
+}
+.table td { padding: 11px 10px; border-bottom: 1px solid var(--row-border); color: var(--text-80); }
+.table tbody tr { cursor: pointer; transition: background 120ms; }
+.table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+.table tbody tr.is-active { background: rgba(52, 211, 153, 0.08); }
+.table tbody tr.is-active td:first-child { box-shadow: inset 2px 0 0 var(--positive); }
+.table__name { color: var(--text) !important; }
+
+.stars { color: #fbbf24; letter-spacing: 1px; }
+.quote {
+  margin: 6px 0 0; padding: 10px 13px;
+  background: var(--inset); border: 1px solid var(--inset-border); border-radius: 8px;
+  font-size: 12px; line-height: 16px; font-style: italic; color: var(--text-80);
+}
+
+/* ---------- Фінанси (Figma 638:4192) ---------- */
+.fin-link { text-align: left; cursor: pointer; transition: border-color 150ms, transform 150ms; }
+.fin-link:hover { border-color: rgba(255, 255, 255, 0.25); }
+.fin-link.is-active { border-color: rgba(52, 211, 153, 0.6); }
+.fin-muted { font-size: 12px; line-height: 16px; color: var(--text-40); }
+.fin-value { font-size: 23px; line-height: 20px; font-weight: 700; color: var(--text); }
+.fin-delta { font-size: 10px; line-height: 15px; }
+
+.fin-report { display: flex; flex-direction: column; gap: 16px; }
+.fin-report__row { display: flex; gap: 16px; }
+
+.fin-kpi {
+  width: 143px; height: 128px; padding: 13px; flex-shrink: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  border: 1px solid var(--inset-border); border-radius: 8px;
+}
+.fin-kpi--revenue { background: rgba(52, 211, 153, 0.08); }
+.fin-kpi--expenses { background: rgba(248, 113, 113, 0.08); }
+
+.fin-chart-link { padding: 0; border: 1px solid var(--inset-border); border-radius: 8px; background: none; }
+.fin-chart {
+  height: 128px; padding: 13px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--inset); border-radius: 8px;
+}
+.fin-metric .fin-chart { border: 1px solid var(--inset-border); border-radius: 16px; }
+.fin-chart__head { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; }
+.fin-chart__icon { width: 24px; height: 24px; border-radius: 10px; display: grid; place-items: center; }
+.fin-chart__icon--revenue { background: rgba(52, 211, 153, 0.13); }
+.fin-chart__icon--expenses { background: rgba(248, 113, 113, 0.13); }
+.fin-chart__label { color: var(--text-60); flex: 1; }
+.sparkline { display: block; overflow: visible; }
+.sparkline__grid { stroke: rgba(255, 255, 255, 0.05); stroke-dasharray: 3 3; }
+.sparkline__label { font-family: var(--font-chart); font-size: 9px; fill: var(--text-30); }
+
+.fin-breakdown {
+  width: 388px; padding: 9px 13px 13px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--inset); border: 1px solid var(--inset-border); border-radius: 8px;
+}
+.fin-legend {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; flex: 1;
+}
+.fin-legend li { display: flex; align-items: center; gap: 6px; font-size: 10px; line-height: 15px; }
+.fin-legend__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.fin-legend__label { color: rgba(255, 255, 255, 0.5); flex: 1; }
+.fin-legend__value { color: var(--text-80); }
+
+.fin-metric {
+  width: 334px; padding: 13px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid var(--inset-border); border-radius: 8px;
+}
+.fin-metric--highlighted { border-color: rgba(52, 211, 153, 0.5); }
+.fin-metric__kpi { display: flex; flex-direction: column; gap: 15px; }
+
+.fin-metric-node { display: flex; flex-direction: column; gap: 5px; }
+.fin-chips { display: flex; gap: 5px; }
+.fin-chip {
+  height: 35px; flex: 1; padding: 0 12px;
+  font-size: 10px; line-height: 16px; color: var(--text-80);
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 28px;
+  backdrop-filter: blur(12px); cursor: pointer; transition: border-color 150ms, background 150ms;
+}
+.fin-chip:hover { background: rgba(255, 255, 255, 0.12); }
+.fin-chip.is-active { border-color: var(--positive); color: var(--text); }
+
+.fin-comparison {
+  display: flex; gap: 16px; padding: 21px;
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- Хлібні крихти ---------- */
+.breadcrumbs {
+  display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100vw - 32px);
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 10px; padding: 4px; backdrop-filter: blur(12px);
+}
+.breadcrumbs__item {
+  border: 0; background: transparent; font-size: 12px; line-height: 16px;
+  padding: 5px 9px; border-radius: 6px; cursor: pointer; color: var(--text-40);
+}
+.breadcrumbs__item:not(:last-child)::after { content: '›'; margin-left: 9px; color: var(--text-30); }
+.breadcrumbs__item:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-80); }
+.breadcrumbs__item.is-active { background: rgba(52, 211, 153, 0.12); color: var(--text); }
+
+/* ---------- Коментарі (ADR-0010) ---------- */
+.comments-toggle {
+  height: 28px; min-width: 28px; padding: 0 8px; border: 0; border-radius: 14px;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: transparent; font-size: 13px; cursor: pointer; color: var(--text-60);
+}
+.comments-toggle:hover { background: rgba(255, 255, 255, 0.08); }
+.comments-toggle.is-open { background: rgba(52, 211, 153, 0.15); }
+.comments-toggle__count { font-size: 11px; line-height: 1; color: var(--text-80); }
+
+.entity-bare__actions {
+  position: absolute; top: 6px; right: 6px; z-index: 1;
+  display: flex; align-items: center; gap: 2px;
+}
+.entity-bare > .entity-bare__actions .entity-card__close { position: static; }
+.entity-bare__thread {
+  margin-top: 8px; padding: 13px;
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.entity-icon__badge { position: relative; }
+.entity-icon__count {
+  position: absolute; top: -6px; right: -8px;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 10px; line-height: 1; font-weight: 600; color: #04211a;
+  background: var(--positive); box-shadow: 0 0 0 2px var(--bg-solid);
+}
+
+.thread { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--inset-border); cursor: auto; }
+.entity-bare__thread .thread { padding-top: 0; border-top: 0; }
+.thread__title { margin: 0; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-40); }
+.thread__empty { margin: 0; font-size: 12px; color: var(--text-40); }
+.thread__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow: auto; }
+
+.comment {
+  padding: 10px 12px; border-radius: 8px;
+  background: var(--row); border: 1px solid var(--row-border);
+}
+.comment__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.comment__author {
+  display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px 2px 2px;
+  border: 1px solid transparent; border-radius: 14px; background: transparent; cursor: pointer;
+}
+.comment__author:hover { background: rgba(255, 255, 255, 0.06); }
+.comment__author.is-active { border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.08); }
+.comment__avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 10px; font-weight: 600;
+  background: linear-gradient(135deg, #818cf8, #60a5fa);
+}
+.comment__name { font-size: 12px; color: var(--text-80); }
+.comment__time { font-size: 11px; color: var(--text-30); white-space: nowrap; }
+.comment__text { margin: 6px 0 0; font-size: 12px; line-height: 17px; color: var(--text-80); white-space: pre-wrap; word-break: break-word; }
+.comment__actions { display: flex; gap: 10px; margin-top: 6px; }
+.comment__like, .comment__delete {
+  padding: 2px 6px; border: 0; border-radius: 6px; background: transparent;
+  font-size: 11px; color: var(--text-40); cursor: pointer;
+}
+.comment__like:hover, .comment__delete:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-80); }
+.comment__like.is-liked { color: var(--text-80); }
+.comment__delete:hover { color: var(--negative); }
+
+.thread__composer { display: flex; gap: 8px; align-items: flex-end; }
+.thread__input {
+  flex: 1; resize: none; padding: 9px 12px;
+  font: inherit; font-size: 12px; line-height: 17px; color: var(--text);
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--inset-border); border-radius: 10px;
+  outline: none; transition: border-color 150ms;
+}
+.thread__input:focus { border-color: rgba(52, 211, 153, 0.6); }
+.thread__input::placeholder { color: var(--text-30); }
+.thread__send {
+  width: 34px; height: 34px; border: 0; border-radius: 50%; flex-shrink: 0;
+  font-size: 16px; font-weight: 700; cursor: pointer; color: #fff;
+  background: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%);
+  box-shadow: 0 4px 6px rgba(129, 140, 248, 0.4);
+}
+.thread__send:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
+
+.user-switcher {
+  display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px;
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; backdrop-filter: blur(12px);
+}
+.user-switcher__label { font-size: 12px; color: var(--text-40); }
+.user-switcher__select {
+  font: inherit; font-size: 12px; color: var(--text); padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.06); border: 0; border-radius: 6px; cursor: pointer;
+}
