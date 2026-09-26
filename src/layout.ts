@@ -114,5 +114,5 @@ export function buildGraph(state: NavState, heights: Heights = {}) {
   };
   place(state.root, 0);
 
-  return { nodes, edges, expanded, camera: expanded, complete };
+  return { nodes, edges, expanded, camera: new Set([state.focus]), complete };
 }

@@ -48,9 +48,11 @@ describe('expandedKeys (ADR-0012: вікно з 4 карток)', () => {
     expect(e.has('n4')).toBe(false);
   });
 
-  it('камера показує всі розгорнуті', () => {
-    const g = buildGraph(chain);
-    expect(g.camera).toEqual(g.expanded);
+  it('камера наводиться лише на фокус — останню відкриту картку', () => {
+    expect([...buildGraph(chain).camera]).toEqual(['n4']);
+    const s = navReducer(chain, open('n4', 'city', 'kyiv'));
+    expect([...buildGraph(s).camera]).toEqual([s.focus]);
+    expect(s.focus).toBe('n5');
   });
 });
 

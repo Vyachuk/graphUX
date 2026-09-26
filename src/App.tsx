@@ -75,7 +75,7 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
     });
   }, [nodes]);
 
-  // Камера показує всі розгорнуті картки (ADR-0012), щойно лейаут побудований з реальних висот.
+  // Камера наводиться на фокус — щойно відкриту картку (ADR-0012), коли лейаут побудований з реальних висот.
   useEffect(() => {
     const synced =
       graph.complete &&
@@ -89,7 +89,7 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
     fitView({ nodes: [...graph.camera].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
   }, [nodes, graph, fitView]);
 
-  // Нода змінила розмір без навігації (відкрили тред коментарів) — показуємо розгорнуті картки заново.
+  // Нода змінила розмір без навігації (відкрили тред коментарів) — наводимо камеру на фокус заново.
   const cameraRef = useRef(graph.camera);
   cameraRef.current = graph.camera;
   useEffect(() => {
