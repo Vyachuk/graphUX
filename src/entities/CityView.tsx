@@ -1,4 +1,5 @@
 import { companiesIn, eventsIn, getCity, residentsOf, restaurantsIn } from '../data';
+import { suppliersIn } from '../work';
 import { EntityLink, Field, Section } from './EntityLink';
 
 export function CityView({ id }: { id: string }) {
@@ -34,6 +35,11 @@ export function CityView({ id }: { id: string }) {
           ))}
         </Section>
       )}
+      <Section title="Постачальники">
+        {suppliersIn(id).map((s) => (
+          <EntityLink key={s.id} to={{ type: 'supplier', id: s.id }} via="warehouse" />
+        ))}
+      </Section>
       {residents.length > 0 && (
         <Section title="Мешканці">
           {residents.map((p) => (

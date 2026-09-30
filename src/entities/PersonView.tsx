@@ -1,4 +1,5 @@
 import { eventsOf, getPerson, getRestaurant, reviewsBy } from '../data';
+import { ordersBy, tasksFor, teamsWith } from '../work';
 import { EntityLink, Field, Section } from './EntityLink';
 import { stars } from './ReviewView';
 
@@ -42,6 +43,21 @@ export function PersonView({ id }: { id: string }) {
           ))}
         </Section>
       )}
+      <Section title="Команди">
+        {teamsWith(id).map((t) => (
+          <EntityLink key={t.id} to={{ type: 'team', id: t.id }} via="member of" />
+        ))}
+      </Section>
+      <Section title="Задачі">
+        {tasksFor(id).map((t) => (
+          <EntityLink key={t.id} to={{ type: 'task', id: t.id }} via="assignee" />
+        ))}
+      </Section>
+      <Section title="Замовлення">
+        {ordersBy(id).map((o) => (
+          <EntityLink key={o.id} to={{ type: 'order', id: o.id }} via="ordered" />
+        ))}
+      </Section>
       <Section title="Друзі">
         {p.friendIds.map((fid) => (
           <EntityLink key={fid} to={{ type: 'person', id: fid }} via="friend" />

@@ -4,7 +4,7 @@ import trendDown from '../../assets/figma/trend-down.svg';
 import trendUp from '../../assets/figma/trend-up.svg';
 import { metricLabel, pct, usd, type MetricKind, type MetricSnapshot } from '../../finance';
 import type { EntityRef } from '../../navigation';
-import { useEntityLink } from '../EntityLink';
+import { LinkAnchor, useEntityLink } from '../EntityLink';
 import { Sparkline } from './charts';
 
 const tone: Record<MetricKind, { color: string; icon: string }> = {
@@ -22,6 +22,7 @@ export function LinkCard({ to, via, className, children }: { to: EntityRef; via:
   return (
     <button type="button" className={`${className} fin-link nodrag${active ? ' is-active' : ''}`} onClick={onClick}>
       {children}
+      <LinkAnchor to={to} via={via} />
     </button>
   );
 }

@@ -1,5 +1,6 @@
 // Фінансові мок-дані ресторанів (ADR-0008). Пʼяна вишня (r8) — цифри з макета Figma 638:4192.
 import { getRestaurant, restaurants } from './data';
+import { seeded } from './seeded';
 
 export type MetricKind = 'revenue' | 'expenses';
 export type PeriodId = 'feb' | 'mar' | 'q2' | 'y2025';
@@ -40,17 +41,6 @@ const breakdown = (m: number, o: number, i: number): Breakdown => [
   { label: 'Infrastructure', share: i, color: '#f472b6' },
   { label: 'Other', share: 100 - m - o - i, color: '#fb923c' },
 ];
-
-// Детермінований генератор, щоб цифри не стрибали між перезавантаженнями.
-function seeded(seed: string) {
-  let h = 2166136261;
-  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return () => {
-    h = Math.imul(h ^ (h >>> 15), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    return ((h ^= h >>> 16) >>> 0) / 4294967296;
-  };
-}
 
 const round = (n: number, step = 50) => Math.round(n / step) * step;
 

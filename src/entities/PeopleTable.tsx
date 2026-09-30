@@ -1,5 +1,6 @@
 import { getCity, getCompany, getRestaurant, people } from '../data';
 import { sameRef, useNav } from '../navigation';
+import { LinkAnchor } from './EntityLink';
 
 export function PeopleTable() {
   const { open, openedChildren } = useNav();
@@ -26,11 +27,17 @@ export function PeopleTable() {
                 className={`nodrag${active ? ' is-active' : ''}`}
                 onClick={() => open(ref, 'row')}
               >
-                <td className="table__name">{p.name}</td>
+                <td className="table__name">
+                  {p.name}
+                  <LinkAnchor to={ref} via="row" edge="l" />
+                </td>
                 <td>{p.role}</td>
                 <td>{getCompany(p.companyId).name}</td>
                 <td>{getCity(p.cityId).name}</td>
-                <td>{getRestaurant(p.favoriteRestaurantId).name}</td>
+                <td className="table__last">
+                  {getRestaurant(p.favoriteRestaurantId).name}
+                  <LinkAnchor to={ref} via="row" edge="r" />
+                </td>
               </tr>
             );
           })}

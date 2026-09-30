@@ -2,7 +2,7 @@
 import { useState, type KeyboardEvent } from 'react';
 import { timeAgo, useComments } from './comments';
 import { getPerson } from './data';
-import { useEntityLink } from './entities/EntityLink';
+import { LinkAnchor, useEntityLink } from './entities/EntityLink';
 import type { EntityRef } from './navigation';
 
 const initials = (name: string) => name.split(' ').map((w) => w[0]).slice(0, 2).join('');
@@ -29,6 +29,7 @@ function Author({ personId }: { personId: string }) {
     <button type="button" className={`comment__author nodrag${active ? ' is-active' : ''}`} onClick={onClick} title="Відкрити профіль">
       <span className="comment__avatar">{initials(p.name)}</span>
       <span className="comment__name">{p.name}</span>
+      <LinkAnchor to={{ type: 'person', id: personId }} via="commented" />
     </button>
   );
 }

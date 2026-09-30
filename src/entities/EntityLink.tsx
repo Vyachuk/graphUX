@@ -1,5 +1,6 @@
+import { Handle, Position } from '@xyflow/react';
 import { Children, type ReactNode } from 'react';
-import { sameRef, useNav, type EntityRef } from '../navigation';
+import { anchorId, sameRef, useNav, type EntityRef } from '../navigation';
 import { registry } from './registry';
 
 type Props = {
@@ -18,6 +19,25 @@ export function useEntityLink(to: EntityRef, via: string) {
   };
 }
 
+/**
+ * Невидимий хендл усередині клікабельного елемента (ADR-0015). React Flow міряє його позицію,
+ * і радіальне ребро до відкритої сутності виходить з краю картки на висоті саме цього елемента.
+ * Батьківський елемент має бути `position: relative`.
+ */
+export function LinkAnchor({ to, via, edge = 'both' }: { to: EntityRef; via: string; edge?: 'l' | 'r' | 'both' }) {
+  const id = anchorId(to, via);
+  // Два хендли — лівий і правий край елемента: з них видно і висоту, і колонку, в якій він стоїть (ADR-0016).
+  // Рядок таблиці ставить лівий у першу комірку, правий — в останню (`edge`).
+  return (
+    <>
+      {edge !== 'r' && <Handle type="source" id={`${id}:l`} position={Position.Left} isConnectable={false} className="link-anchor" />}
+      {edge !== 'l' && (
+        <Handle type="source" id={`${id}:r`} position={Position.Right} isConnectable={false} className="link-anchor link-anchor--r" />
+      )}
+    </>
+  );
+}
+
 /** Клікабельне посилання на іншу сутність: відкриває її новою гілкою (ADR-0009). */
 export function EntityLink({ to, via, children }: Props) {
   const { active, onClick } = useEntityLink(to, via);
@@ -32,6 +52,7 @@ export function EntityLink({ to, via, children }: Props) {
       <span className="entity-link__icon">{def.icon}</span>
       <span className="entity-link__label">{children ?? def.title(to.id)}</span>
       <span className="entity-link__arrow">→</span>
+      <LinkAnchor to={to} via={via} />
     </button>
   );
 }

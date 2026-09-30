@@ -87,6 +87,12 @@ function useCommentsContext() {
   return ctx;
 }
 
+/** Усі коментарі — для асистента (ADR-0018). */
+export const useAllComments = () => useCommentsContext().comments;
+
+/** Запис і видалення коментарів — для асистента (ADR-0020). */
+export const useCommentsDispatch = () => useCommentsContext().dispatch;
+
 export const useCurrentUser = () => {
   const { userId, setUserId } = useCommentsContext();
   return { userId, setUserId };

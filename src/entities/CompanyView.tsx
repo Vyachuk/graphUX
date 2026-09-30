@@ -1,4 +1,5 @@
 import { employeesOf, eventsBy, getCompany } from '../data';
+import { teamsOf } from '../work';
 import { EntityLink, Field, Section } from './EntityLink';
 
 export function CompanyView({ id }: { id: string }) {
@@ -18,6 +19,11 @@ export function CompanyView({ id }: { id: string }) {
           <EntityLink key={p.id} to={{ type: 'person', id: p.id }} via="employee">
             {p.name} · {p.role}
           </EntityLink>
+        ))}
+      </Section>
+      <Section title="Команди">
+        {teamsOf(id).map((t) => (
+          <EntityLink key={t.id} to={{ type: 'team', id: t.id }} via="team" />
         ))}
       </Section>
       <Section title="Організовує події">

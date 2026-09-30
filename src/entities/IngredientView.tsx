@@ -1,4 +1,5 @@
 import { dishesWith, formatPrice, getIngredient } from '../data';
+import { suppliersWith } from '../work';
 import { EntityLink, Field, Section } from './EntityLink';
 
 export function IngredientView({ id }: { id: string }) {
@@ -15,6 +16,11 @@ export function IngredientView({ id }: { id: string }) {
           <EntityLink key={d.id} to={{ type: 'dish', id: d.id }} via="used in">
             {d.name} · {formatPrice(d)}
           </EntityLink>
+        ))}
+      </Section>
+      <Section title="Постачальники">
+        {suppliersWith(id).map((s) => (
+          <EntityLink key={s.id} to={{ type: 'supplier', id: s.id }} via="supplied by" />
         ))}
       </Section>
     </>

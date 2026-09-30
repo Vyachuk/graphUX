@@ -1,6 +1,6 @@
 // KPI-картка з чипами періодів (Figma 638:2474, чипи 638:2517…2523).
 import { comparisonId, getFinancials, parseMetricId, periods } from '../../finance';
-import { useEntityLink } from '../EntityLink';
+import { LinkAnchor, useEntityLink } from '../EntityLink';
 import { MetricCard } from './parts';
 
 export function MetricView({ id }: { id: string }) {
@@ -24,6 +24,7 @@ function PeriodChip({ label, to }: { label: string; to: { type: 'comparison'; id
   return (
     <button type="button" className={`fin-chip nodrag${active ? ' is-active' : ''}`} onClick={onClick}>
       {label}
+      <LinkAnchor to={to} via={label} />
     </button>
   );
 }

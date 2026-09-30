@@ -1,4 +1,5 @@
 import { dishesOf, eventsAt, fansOf, formatPrice, getPerson, getRestaurant, reviewsOf } from '../data';
+import { ordersAt, projectsFor, suppliersOf } from '../work';
 import { EntityLink, Field, Section } from './EntityLink';
 import { stars } from './ReviewView';
 
@@ -43,6 +44,21 @@ export function RestaurantView({ id }: { id: string }) {
           ))}
         </Section>
       )}
+      <Section title="Постачальники">
+        {suppliersOf(id).map((s) => (
+          <EntityLink key={s.id} to={{ type: 'supplier', id: s.id }} via="supplied by" />
+        ))}
+      </Section>
+      <Section title="IT-проєкти">
+        {projectsFor(id).map((p) => (
+          <EntityLink key={p.id} to={{ type: 'project', id: p.id }} via="client of" />
+        ))}
+      </Section>
+      <Section title="Замовлення">
+        {ordersAt(id).map((o) => (
+          <EntityLink key={o.id} to={{ type: 'order', id: o.id }} via="order" />
+        ))}
+      </Section>
       <Section title="Фанати">
         {fansOf(id).map((p) => (
           <EntityLink key={p.id} to={{ type: 'person', id: p.id }} via="fan" />

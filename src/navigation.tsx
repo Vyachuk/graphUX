@@ -14,7 +14,13 @@ export type EntityType =
   | 'review'
   | 'report'
   | 'metric'
-  | 'comparison';
+  | 'comparison'
+  | 'team'
+  | 'project'
+  | 'task'
+  | 'supplier'
+  | 'order'
+  | 'assistant';
 export type EntityRef = { type: EntityType; id: string };
 
 export type TreeNode = {
@@ -32,15 +38,21 @@ export type NavState = {
   focus: string;
   /** Лічильник для унікальних ключів: одна сутність може бути в дереві кілька разів. */
   seq: number;
+  /** Стрес-тест (ADR-0013): усі картки розгорнуті, ширина кожної варіюється. */
+  stress?: boolean;
 };
 
 export type NavAction =
   | { kind: 'open'; from: string; ref: EntityRef; via?: string }
   | { kind: 'focus'; key: string }
-  | { kind: 'close'; key: string };
+  | { kind: 'close'; key: string }
+  /** ADR-0018: «Скасувати» відповідь асистента — повернути знімок стану до неї. */
+  | { kind: 'restore'; state: NavState };
 
 export const sameRef = (a: EntityRef, b: EntityRef) => a.type === b.type && a.id === b.id;
 export const refKey = (ref: EntityRef) => `${ref.type}:${ref.id}`;
+/** Id хендла на елементі, з якого відкрили сутність: ребро в колі стартує саме від нього (ADR-0015). */
+export const anchorId = (ref: EntityRef, via = '') => `${refKey(ref)}|${via}`;
 
 export const initialNav: NavState = {
   nodes: { n0: { key: 'n0', ref: { type: 'people', id: 'all' }, parent: null, children: [] } },
@@ -86,6 +98,8 @@ export function navReducer(state: NavState, action: NavAction): NavState {
       if (!state.nodes[action.key] || action.key === state.focus) return state;
       return { ...state, focus: action.key };
     }
+    case 'restore':
+      return action.state;
     case 'close': {
       const node = state.nodes[action.key];
       if (!node || node.parent === null) return state; // корінь не закривається
@@ -110,6 +124,13 @@ export function NavProvider({ value, children }: { value: NavContextValue; child
 
 export function NodeKeyProvider({ nodeKey, children }: { nodeKey: string; children: ReactNode }) {
   return <NodeKeyContext.Provider value={nodeKey}>{children}</NodeKeyContext.Provider>;
+}
+
+/** Увесь стан навігації — для асистента (ADR-0018). */
+export function useNavState() {
+  const ctx = useContext(NavContext);
+  if (!ctx) throw new Error('useNavState must be used inside NavProvider');
+  return ctx.state;
 }
 
 /** Навігація з точки зору поточної ноди: `open` додає нову гілку з неї. */

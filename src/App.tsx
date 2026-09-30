@@ -1,65 +1,138 @@
 import {
   Background,
   Controls,
+  MiniMap,
   Panel,
   ReactFlow,
   ReactFlowProvider,
   useNodesState,
   useReactFlow,
+  useStore,
+  useStoreApi,
 } from '@xyflow/react';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { EntityNode, REFIT_EVENT, type EntityFlowNode } from './EntityNode';
 import { CommentsProvider, useCurrentUser } from './comments';
 import { people } from './data';
-import { GraphEdge } from './GraphEdge';
+import { anchorOf, GraphEdge, MapEdge } from './GraphEdge';
 import { registry } from './entities/registry';
-import { buildGraph, heightKey, type Heights } from './layout';
+import { buildGraph, heightKey, type Anchors, type Heights, type LayoutMode } from './layout';
 import { initialNav, navReducer, NavProvider, pathTo, type NavAction, type NavState } from './navigation';
+import { StressHud } from './StressHud';
+import { AssistantChat, AssistantDock } from './assistant/AssistantUI';
+import { AssistantProvider } from './assistant/session';
+import { stressFromUrl, stressNav } from './stress';
 
 const nodeTypes = { entity: EntityNode };
-const edgeTypes = { graph: GraphEdge };
+const edgeTypes = { graph: GraphEdge, map: MapEdge };
 // Зверху місце під хлібні крихти, знизу — під Controls.
 const FIT_PADDING = { top: '80px', bottom: '40px', x: '48px' } as const;
+/** Стрес-тест: граф зі 150+ карток має влазити в екран цілком. */
+const STRESS_MIN_ZOOM = 0.02;
+const STRESS_PAD = 48;
+const STRESS_TOP = 80;
+const minimapColor = (n: EntityFlowNode) => registry[n.data.entity.type].accent;
+
+/** ADR-0013: `?stress=150` відкриває канвас зі 150 розгорнутими картками. */
+function initialState(): NavState {
+  const stress = stressFromUrl(window.location.search);
+  return stress ? stressNav(stress.count, stress.branch) : initialNav;
+}
 
 export default function App() {
-  const [state, dispatch] = useReducer(navReducer, initialNav);
+  const [state, dispatch] = useReducer(navReducer, undefined, initialState);
   const nav = useMemo(() => ({ state, dispatch }), [state]);
 
   return (
     <CommentsProvider>
       <NavProvider value={nav}>
-        <ReactFlowProvider>
-          <Canvas state={state} dispatch={dispatch} />
-        </ReactFlowProvider>
+        {/* ADR-0018: асистент бачить той самий стан і діє тими самими діями, що й користувач. */}
+        <AssistantProvider state={state} dispatch={dispatch}>
+          <div className="app">
+            <div className="app__canvas">
+              <ReactFlowProvider>
+                <Canvas state={state} dispatch={dispatch} />
+              </ReactFlowProvider>
+              <AssistantDock />
+            </div>
+            <AssistantChat />
+          </div>
+        </AssistantProvider>
       </NavProvider>
     </CommentsProvider>
   );
 }
 
+/** ADR-0017: «Мапа» за замовчуванням, `?layout=tree` — колонки з ADR-0009. */
+const initialMode = (): LayoutMode => (new URLSearchParams(window.location.search).get('layout') === 'tree' ? 'tree' : 'map');
+
 function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction) => void }) {
-  // ADR-0009: лейаут дерева залежить від виміряних висот нод.
+  // ADR-0009: лейаут залежить від виміряних висот нод.
   const [heights, setHeights] = useState<Heights>({});
-  const graph = useMemo(() => buildGraph(state, heights), [state, heights]);
+  const [anchors, setAnchors] = useState<Anchors>({});
+  const [mode, setMode] = useState(initialMode);
+  const graph = useMemo(() => buildGraph(state, heights, mode, anchors), [state, heights, mode, anchors]);
+  const store = useStoreApi<EntityFlowNode>();
   // React Flow v12 зберігає виміряні розміри в самих нодах, тож потрібен onNodesChange.
   const [nodes, setNodes, onNodesChange] = useNodesState<EntityFlowNode>(graph.nodes);
-  const { fitView } = useReactFlow();
+  const { fitView, getNodesBounds, setViewport } = useReactFlow();
+  const viewportWidth = useStore((s) => s.width);
   const pendingFit = useRef(true);
+  // Стрес-тест: перший кадр показує весь граф, далі камера працює як звичайно.
+  const fitAll = useRef(!!state.stress);
+  const fitStart = useRef(performance.now());
+  const [layoutMs, setLayoutMs] = useState<number | null>(null);
 
   useEffect(() => {
     pendingFit.current = true;
+    fitStart.current = performance.now();
   }, [state]);
+
+  // Зміна лейауту: у стрес-тесті знову показуємо огляд, інакше — фокус.
+  const firstMode = useRef(true);
+  useEffect(() => {
+    if (firstMode.current) {
+      firstMode.current = false;
+      return;
+    }
+    pendingFit.current = true;
+    fitAll.current = !!state.stress;
+    fitStart.current = performance.now();
+  }, [mode, state.stress]);
 
   // Синхронізуємо ноди з графом. Виміри лишаємо лише тим, чий розмір не змінився.
   useEffect(() => {
-    setNodes((prev) =>
-      graph.nodes.map((n) => {
-        const old = prev.find((p) => p.id === n.id);
-        return old?.measured && old.data.expanded === n.data.expanded ? { ...n, measured: old.measured } : n;
-      }),
-    );
+    setNodes((prev) => {
+      const byId = new Map(prev.map((p) => [p.id, p]));
+      return graph.nodes.map((n) => {
+        const old = byId.get(n.id);
+        return old?.measured && old.data.expanded === n.data.expanded && old.data.width === n.data.width
+          ? { ...n, measured: old.measured }
+          : n;
+      });
+    });
   }, [graph, setNodes]);
 
   // Нові виміри → перерахунок лейауту.
+  // ADR-0016: разом із висотами беремо положення рядків-якорів — лейаут прокладає ребра в обхід карток.
+  useEffect(() => {
+    if (mode === 'tree') return;
+    const { nodeLookup } = store.getState();
+    setAnchors((prev) => {
+      let next = prev;
+      for (const e of graph.edges) {
+        const src = nodeLookup.get(e.source);
+        const a = src && e.data?.anchor ? anchorOf(src, e.data.anchor) : null;
+        const old = prev[e.target];
+        if (a && (!old || Math.abs(old.x0 - a.x0) + Math.abs(old.x1 - a.x1) + Math.abs(old.y - a.y) > 0.5)) {
+          if (next === prev) next = { ...prev };
+          next[e.target] = a;
+        }
+      }
+      return next;
+    });
+  }, [nodes, graph.edges, mode, store]);
+
   useEffect(() => {
     setHeights((prev) => {
       let next = prev;
@@ -82,12 +155,35 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
       nodes.length === graph.nodes.length &&
       nodes.every((n, i) => {
         const g = graph.nodes[i];
-        return n.id === g.id && n.data.expanded === g.data.expanded && n.position.y === g.position.y && n.measured?.width;
+        return (
+          n.id === g.id &&
+          n.data.expanded === g.data.expanded &&
+          n.position.x === g.position.x &&
+          n.position.y === g.position.y &&
+          n.measured?.width
+        );
       });
     if (!pendingFit.current || !synced) return;
     pendingFit.current = false;
+    setLayoutMs(performance.now() - fitStart.current);
+    if (fitAll.current && mode !== 'tree') {
+      // Мапа зі 150+ карток цілком — дрібно. Показуємо корінь і його дітей; увесь граф — ⛶ або мінімапа.
+      fitAll.current = false;
+      const root = state.nodes[state.root];
+      fitView({ nodes: [root.key, ...root.children].map((id) => ({ id })), padding: FIT_PADDING, maxZoom: 1 });
+      return;
+    }
+    if (fitAll.current) {
+      // Дерево зі 150+ карток у рази вище, ніж ширше: вписуємо за шириною (усі колонки видно,
+      // картки читабельні), далі — скрол униз. Увесь граф — мінімапа або кнопка ⛶.
+      fitAll.current = false;
+      const b = getNodesBounds(nodes);
+      const zoom = Math.max(STRESS_MIN_ZOOM, Math.min(1, (viewportWidth - 2 * STRESS_PAD) / b.width));
+      setViewport({ x: STRESS_PAD - b.x * zoom, y: STRESS_TOP - b.y * zoom, zoom });
+      return;
+    }
     fitView({ nodes: [...graph.camera].map((id) => ({ id })), duration: 400, padding: FIT_PADDING, maxZoom: 1 });
-  }, [nodes, graph, fitView]);
+  }, [nodes, graph, fitView, getNodesBounds, setViewport, viewportWidth, mode, state]);
 
   // Нода змінила розмір без навігації (відкрили тред коментарів) — наводимо камеру на фокус заново.
   const cameraRef = useRef(graph.camera);
@@ -132,7 +228,7 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
-      minZoom={0.2}
+      minZoom={state.stress ? STRESS_MIN_ZOOM : 0.2}
       maxZoom={1.5}
       proOptions={{ hideAttribution: true }}
       colorMode="dark"
@@ -142,9 +238,18 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
       <Panel position="top-left">
         <Breadcrumbs state={state} dispatch={dispatch} />
       </Panel>
-      <Panel position="top-right">
+      <Panel position="top-right" className="top-right">
+        <LayoutSwitch mode={mode} onChange={setMode} />
         <UserSwitcher />
       </Panel>
+      {state.stress && (
+        <>
+          <MiniMap pannable zoomable nodeColor={minimapColor} maskColor="rgb(0 0 0 / 0.5)" />
+          <Panel position="top-center">
+            <StressHud nodes={graph.nodes.length} edges={graph.edges.length} expanded={graph.expanded.size} layoutMs={layoutMs} />
+          </Panel>
+        </>
+      )}
     </ReactFlow>
   );
 }
@@ -184,5 +289,28 @@ function UserSwitcher() {
         ))}
       </select>
     </label>
+  );
+}
+
+function LayoutSwitch({ mode, onChange }: { mode: LayoutMode; onChange: (m: LayoutMode) => void }) {
+  const options: { id: LayoutMode; label: string }[] = [
+    { id: 'map', label: '⇆ Мапа' },
+    { id: 'tree', label: '☰ Дерево' },
+  ];
+  return (
+    <div className="layout-switch" role="radiogroup" aria-label="Лейаут">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={mode === o.id}
+          className={`layout-switch__option${mode === o.id ? ' is-active' : ''}`}
+          onClick={() => onChange(o.id)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }

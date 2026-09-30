@@ -218,8 +218,11 @@ export const reviewsBy = (personId: string) => reviews.filter((r) => r.authorId 
 
 const currencySymbol: Record<string, string> = { UAH: '₴', PLN: 'zł' };
 
-/** Ціна страви у валюті країни, де розташований ресторан. */
-export const formatPrice = (dish: Dish) => {
-  const { currency } = getCountry(getCity(getRestaurant(dish.restaurantId).cityId).countryId);
-  return `${dish.price} ${currencySymbol[currency] ?? currency}`;
+/** Сума у валюті країни, де розташований ресторан. */
+export const formatAmount = (amount: number, restaurantId: string) => {
+  const { currency } = getCountry(getCity(getRestaurant(restaurantId).cityId).countryId);
+  return `${amount} ${currencySymbol[currency] ?? currency}`;
 };
+
+/** Ціна страви у валюті країни, де розташований ресторан. */
+export const formatPrice = (dish: Dish) => formatAmount(dish.price, dish.restaurantId);

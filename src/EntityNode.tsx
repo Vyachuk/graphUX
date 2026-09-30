@@ -12,6 +12,8 @@ export type EntityNodeData = {
   isRoot: boolean;
   expanded: boolean;
   focused: boolean;
+  /** Ширина розгорнутої картки, px — рахує лейаут (ADR-0004, ADR-0013). */
+  width: number;
 };
 
 export type EntityFlowNode = Node<EntityNodeData, 'entity'>;
@@ -31,7 +33,7 @@ function Badge({ def, size }: { def: EntityDef; size: number }) {
   return def.iconSrc ? <img src={def.iconSrc} width={size} height={size} alt="" /> : <span>{def.icon}</span>;
 }
 
-function EntityBody({ entity, isRoot, expanded, focused }: EntityNodeData) {
+function EntityBody({ entity, isRoot, expanded, focused, width }: EntityNodeData) {
   const { focus, close } = useNav();
   const { count } = useComments(entity);
   const [threadOpen, setThreadOpen] = useState(false);
@@ -76,7 +78,7 @@ function EntityBody({ entity, isRoot, expanded, focused }: EntityNodeData) {
 
   if (def.chrome === 'bare') {
     return (
-      <div className={`entity-bare${focused ? ' is-focused' : ''}`} style={{ ...style, width: def.width }}>
+      <div className={`entity-bare${focused ? ' is-focused' : ''}`} style={{ ...style, width }}>
         {handles}
         <div className="entity-bare__actions">
           {toggle}
@@ -89,7 +91,7 @@ function EntityBody({ entity, isRoot, expanded, focused }: EntityNodeData) {
   }
 
   return (
-    <div className={`entity-card${focused ? ' is-focused' : ''}`} style={{ ...style, width: def.width }}>
+    <div className={`entity-card${focused ? ' is-focused' : ''}`} style={{ ...style, width }}>
       {handles}
       <span className="entity-card__divider" />
       <header className="entity-card__header">
@@ -105,7 +107,7 @@ function EntityBody({ entity, isRoot, expanded, focused }: EntityNodeData) {
           </span>
         </div>
       </header>
-      <div className="entity-card__body">
+      <div className={`entity-card__body${def.flow === 'block' ? '' : ' entity-card__body--columns'}`}>
         <def.Component id={entity.id} />
       </div>
       {thread}

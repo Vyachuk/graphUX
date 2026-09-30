@@ -22,6 +22,14 @@ import { PeopleTable } from './PeopleTable';
 import { PersonView } from './PersonView';
 import { RestaurantView } from './RestaurantView';
 import { ReviewView } from './ReviewView';
+import { OrderView } from './OrderView';
+import { ProjectView } from './ProjectView';
+import { SupplierView } from './SupplierView';
+import { TaskView } from './TaskView';
+import { TeamView } from './TeamView';
+import { AssistantView } from '../assistant/AssistantView';
+import { getCard } from '../assistant/cards';
+import { getOrder, getProject, getSupplier, getTask, getTeam } from '../work';
 import chartDonut from '../assets/figma/chart-donut.svg';
 import { getPeriod, metricLabel, parseMetricId, QUARTER } from '../finance';
 import { ComparisonView } from './finance/ComparisonView';
@@ -40,6 +48,8 @@ export type EntityDef = {
   /** SVG-іконка з Figma замість емодзі в бейджі хедера. */
   iconSrc?: string;
   /** 'bare' — нода без хедера, вміст сам є карткою (metric, comparison). */
+  /** 'columns' (за замовчуванням) — секції течуть колонками, як сторінка; 'block' — вміст має власну сітку (ADR-0016). */
+  flow?: 'columns' | 'block';
   chrome?: 'card' | 'bare';
   Component: ComponentType<{ id: string }>;
 };
@@ -50,13 +60,14 @@ export const registry: Record<EntityType, EntityDef> = {
     label: 'Люди',
     width: 760,
     accent: '#6366f1',
+    flow: 'block',
     title: () => 'Усі люди',
     Component: PeopleTable,
   },
   person: {
     icon: '🧑',
     label: 'Людина',
-    width: 340,
+    width: 640,
     accent: '#0ea5e9',
     title: (id) => getPerson(id).name,
     Component: PersonView,
@@ -64,7 +75,7 @@ export const registry: Record<EntityType, EntityDef> = {
   restaurant: {
     icon: '🍽️',
     label: 'Ресторан',
-    width: 340,
+    width: 640,
     accent: '#f97316',
     title: (id) => getRestaurant(id).name,
     Component: RestaurantView,
@@ -72,7 +83,7 @@ export const registry: Record<EntityType, EntityDef> = {
   city: {
     icon: '🏙️',
     label: 'Місто',
-    width: 320,
+    width: 600,
     accent: '#10b981',
     title: (id) => getCity(id).name,
     Component: CityView,
@@ -80,7 +91,7 @@ export const registry: Record<EntityType, EntityDef> = {
   dish: {
     icon: '🥟',
     label: 'Страва',
-    width: 320,
+    width: 520,
     accent: '#e11d48',
     title: (id) => getDish(id).name,
     Component: DishView,
@@ -88,7 +99,7 @@ export const registry: Record<EntityType, EntityDef> = {
   company: {
     icon: '🏢',
     label: 'Компанія',
-    width: 340,
+    width: 600,
     accent: '#8b5cf6',
     title: (id) => getCompany(id).name,
     Component: CompanyView,
@@ -96,7 +107,7 @@ export const registry: Record<EntityType, EntityDef> = {
   country: {
     icon: '🌍',
     label: 'Країна',
-    width: 300,
+    width: 460,
     accent: '#0d9488',
     title: (id) => `${getCountry(id).flag} ${getCountry(id).name}`,
     Component: CountryView,
@@ -104,7 +115,7 @@ export const registry: Record<EntityType, EntityDef> = {
   ingredient: {
     icon: '🧄',
     label: 'Інгредієнт',
-    width: 300,
+    width: 460,
     accent: '#84cc16',
     title: (id) => getIngredient(id).name,
     Component: IngredientView,
@@ -112,7 +123,7 @@ export const registry: Record<EntityType, EntityDef> = {
   event: {
     icon: '📅',
     label: 'Подія',
-    width: 320,
+    width: 560,
     accent: '#d946ef',
     title: (id) => getEvent(id).name,
     Component: EventView,
@@ -120,7 +131,7 @@ export const registry: Record<EntityType, EntityDef> = {
   review: {
     icon: '⭐',
     label: 'Відгук',
-    width: 320,
+    width: 480,
     accent: '#eab308',
     title: (id) => `★ ${getReview(id).rating} · ${getPerson(getReview(id).authorId).name}`,
     Component: ReviewView,
@@ -131,6 +142,7 @@ export const registry: Record<EntityType, EntityDef> = {
     width: 831,
     accent: '#34d399',
     iconSrc: chartDonut,
+    flow: 'block',
     title: (id) => `Financial Report ${getRestaurant(id).name}`,
     subtitle: () => `${QUARTER} Overview`,
     Component: ReportView,
@@ -158,5 +170,54 @@ export const registry: Record<EntityType, EntityDef> = {
       return `${metricLabel[kind].chart}: ${getPeriod(period ?? '').label} vs ${QUARTER}`;
     },
     Component: ComparisonView,
+  },
+  team: {
+    icon: '🧩',
+    label: 'Команда',
+    width: 560,
+    accent: '#38bdf8',
+    title: (id) => getTeam(id).name,
+    Component: TeamView,
+  },
+  project: {
+    icon: '🗂️',
+    label: 'Проєкт',
+    width: 640,
+    accent: '#a78bfa',
+    title: (id) => getProject(id).name,
+    Component: ProjectView,
+  },
+  task: {
+    icon: '✅',
+    label: 'Задача',
+    width: 520,
+    accent: '#22c55e',
+    title: (id) => getTask(id).title,
+    Component: TaskView,
+  },
+  supplier: {
+    icon: '🚚',
+    label: 'Постачальник',
+    width: 560,
+    accent: '#f59e0b',
+    title: (id) => getSupplier(id).name,
+    Component: SupplierView,
+  },
+  order: {
+    icon: '🧾',
+    label: 'Замовлення',
+    width: 480,
+    accent: '#fb7185',
+    title: (id) => `Замовлення №${getOrder(id).id.slice(1)}`,
+    Component: OrderView,
+  },
+  assistant: {
+    icon: '✦',
+    label: 'Асистент',
+    width: 520,
+    accent: '#a3e635',
+    flow: 'block',
+    title: (id) => getCard(id).title,
+    Component: AssistantView,
   },
 };
