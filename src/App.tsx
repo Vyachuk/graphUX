@@ -10,7 +10,7 @@ import {
   useStore,
   useStoreApi,
 } from '@xyflow/react';
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { EntityNode, REFIT_EVENT, type EntityFlowNode } from './EntityNode';
 import { CommentsProvider, useCurrentUser } from './comments';
 import { people } from './data';
@@ -235,12 +235,13 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
     >
       <Background gap={24} color="rgba(255,255,255,0.06)" />
       <Controls showInteractive={false} />
-      <Panel position="top-left">
+      {/* ADR-0022: один хедер-рядок — крихти забирають вільне місце, дії справа. */}
+      <Panel position="top-left" className="topbar">
         <Breadcrumbs state={state} dispatch={dispatch} />
-      </Panel>
-      <Panel position="top-right" className="top-right">
-        <LayoutSwitch mode={mode} onChange={setMode} />
-        <UserSwitcher />
+        <div className="topbar__actions">
+          <LayoutSwitch mode={mode} onChange={setMode} />
+          <UserSwitcher />
+        </div>
       </Panel>
       {state.stress && (
         <>
@@ -254,23 +255,134 @@ function Canvas({ state, dispatch }: { state: NavState; dispatch: (a: NavAction)
   );
 }
 
+/**
+ * Хлібні крихти (ADR-0021): видно лише перший і останній крок, проміжні — у popover за кнопкою «⋯».
+ * Так рядок не росте з глибиною шляху й влазить на вузькому екрані.
+ */
 function Breadcrumbs({ state, dispatch }: { state: NavState; dispatch: (a: NavAction) => void }) {
+  const path = pathTo(state, state.focus);
+  const [first, last, middle] = [path[0], path[path.length - 1], path.slice(1, -1)];
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLUListElement>(null);
+
+  const label = (key: string) => {
+    const { ref } = state.nodes[key];
+    const def = registry[ref.type];
+    return { icon: def.icon, title: def.title(ref.id) };
+  };
+  const go = (key: string) => {
+    setOpen(false);
+    dispatch({ kind: 'focus', key });
+  };
+  const close = (refocus: boolean) => {
+    setOpen(false);
+    if (refocus) toggle.current?.focus();
+  };
+
+  // Будь-яка навігація закриває popover.
+  useEffect(() => setOpen(false), [state.focus]);
+
+  // Клік поза крихтами або Escape — закрити.
+  useEffect(() => {
+    if (!open) return;
+    menu.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onDown = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) close(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        close(true);
+      }
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  // Стрілки ↑/↓, Home/End усередині меню (і не віддаємо їх навігації графа).
+  const onMenuKey = (e: ReactKeyboardEvent<HTMLUListElement>) => {
+    const items = [...(menu.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    const next = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    e.stopPropagation();
+    items[(next + items.length) % items.length]?.focus();
+  };
+
+  const crumb = (key: string) => {
+    const { icon, title } = label(key);
+    return (
+      <button
+        type="button"
+        className={`breadcrumbs__item${key === state.focus ? ' is-active' : ''}`}
+        aria-current={key === state.focus ? 'page' : undefined}
+        title={title}
+        onClick={() => go(key)}
+      >
+        <span className="breadcrumbs__icon">{icon}</span>
+        <span className="breadcrumbs__title">{title}</span>
+      </button>
+    );
+  };
+  const sep = <span className="breadcrumbs__sep" aria-hidden="true">›</span>;
+
   return (
-    <nav className="breadcrumbs">
-      {pathTo(state, state.focus).map((key) => {
-        const { ref } = state.nodes[key];
-        const def = registry[ref.type];
-        return (
-          <button
-            key={key}
-            type="button"
-            className={`breadcrumbs__item${key === state.focus ? ' is-active' : ''}`}
-            onClick={() => dispatch({ kind: 'focus', key })}
-          >
-            {def.icon} {def.title(ref.id)}
-          </button>
-        );
-      })}
+    <nav className="breadcrumbs" ref={root} aria-label="Шлях">
+      {crumb(first)}
+      {middle.length > 0 && (
+        <>
+          {sep}
+          <div className="breadcrumbs__more">
+            <button
+              ref={toggle}
+              type="button"
+              className={`breadcrumbs__item breadcrumbs__toggle${open ? ' is-open' : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-controls="breadcrumbs-menu"
+              aria-label={`Показати ще ${middle.length} ${middle.length === 1 ? 'крок' : 'кроки'} шляху`}
+              title={`Ще ${middle.length}`}
+              onClick={() => setOpen((o) => !o)}
+            >
+              ⋯
+            </button>
+            {open && (
+              <ul id="breadcrumbs-menu" ref={menu} className="breadcrumbs__popover" role="menu" onKeyDown={onMenuKey}>
+                {middle.map((key) => {
+                  const { icon, title } = label(key);
+                  return (
+                    <li key={key} role="none">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="breadcrumbs__menu-item"
+                        onClick={() => go(key)}
+                      >
+                        <span className="breadcrumbs__icon">{icon}</span>
+                        <span className="breadcrumbs__title">{title}</span>
+                        {state.nodes[key].via && <span className="breadcrumbs__via">{state.nodes[key].via}</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+      {path.length > 1 && (
+        <>
+          {sep}
+          {crumb(last)}
+        </>
+      )}
     </nav>
   );
 }
@@ -278,10 +390,26 @@ function Breadcrumbs({ state, dispatch }: { state: NavState; dispatch: (a: NavAc
 /** Від чийого імені пишуться коментарі й ставляться лайки (ADR-0010). */
 function UserSwitcher() {
   const { userId, setUserId } = useCurrentUser();
+  const name = people.find((p) => p.id === userId)?.name ?? '';
+  const initials = name
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('');
+  // ADR-0022: на мобільному — круглий аватар з ініціалами; нативний select лежить поверх нього (прозорий),
+  // тож тап відкриває системний список і доступність не страждає.
   return (
-    <label className="user-switcher">
+    <label className="user-switcher" title={`Ви: ${name}`}>
       <span className="user-switcher__label">Ви</span>
-      <select className="user-switcher__select" value={userId} onChange={(e) => setUserId(e.target.value)}>
+      <span className="user-switcher__avatar" aria-hidden="true">
+        {initials}
+      </span>
+      <select
+        className="user-switcher__select"
+        aria-label="Від чийого імені ви дієте"
+        value={userId}
+        onChange={(e) => setUserId(e.target.value)}
+      >
         {people.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name}
@@ -293,9 +421,10 @@ function UserSwitcher() {
 }
 
 function LayoutSwitch({ mode, onChange }: { mode: LayoutMode; onChange: (m: LayoutMode) => void }) {
-  const options: { id: LayoutMode; label: string }[] = [
-    { id: 'map', label: '⇆ Мапа' },
-    { id: 'tree', label: '☰ Дерево' },
+  // На мобільному видно лише іконки; назва лишається в aria-label і title.
+  const options: { id: LayoutMode; icon: string; label: string }[] = [
+    { id: 'map', icon: '⇆', label: 'Мапа' },
+    { id: 'tree', icon: '☰', label: 'Дерево' },
   ];
   return (
     <div className="layout-switch" role="radiogroup" aria-label="Лейаут">
@@ -306,9 +435,14 @@ function LayoutSwitch({ mode, onChange }: { mode: LayoutMode; onChange: (m: Layo
           role="radio"
           aria-checked={mode === o.id}
           className={`layout-switch__option${mode === o.id ? ' is-active' : ''}`}
+          aria-label={o.label}
+          title={o.label}
           onClick={() => onChange(o.id)}
         >
-          {o.label}
+          <span className="layout-switch__icon" aria-hidden="true">
+            {o.icon}
+          </span>
+          <span className="layout-switch__label">{o.label}</span>
         </button>
       ))}
     </div>

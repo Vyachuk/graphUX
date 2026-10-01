@@ -236,18 +236,46 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------- Хлібні крихти ---------- */
+/* ADR-0021: в один рядок — перший і останній крок, проміжні в popover «⋯». */
 .breadcrumbs {
-  display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100vw - 32px);
+  display: flex; align-items: center; gap: 2px; max-width: calc(100vw - 32px); min-width: 0;
   background: var(--card); border: 1px solid var(--card-border);
   border-radius: 10px; padding: 4px; backdrop-filter: blur(12px);
 }
 .breadcrumbs__item {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0;
   border: 0; background: transparent; font-size: 12px; line-height: 16px;
   padding: 5px 9px; border-radius: 6px; cursor: pointer; color: var(--text-40);
 }
-.breadcrumbs__item:not(:last-child)::after { content: '›'; margin-left: 9px; color: var(--text-30); }
+/* Перший крок не стискається далі за 160px, останній (поточний) забирає решту місця. */
+.breadcrumbs > .breadcrumbs__item:first-child { max-width: 160px; flex-shrink: 1; }
+.breadcrumbs > .breadcrumbs__item:last-child:not(:first-child) { flex: 0 1 auto; max-width: 320px; }
+.breadcrumbs__icon { flex-shrink: 0; }
+.breadcrumbs__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.breadcrumbs__sep { flex-shrink: 0; color: var(--text-30); font-size: 12px; padding: 0 1px; }
 .breadcrumbs__item:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-80); }
 .breadcrumbs__item.is-active { background: rgba(52, 211, 153, 0.12); color: var(--text); }
+.breadcrumbs__item:focus-visible, .breadcrumbs__menu-item:focus-visible { outline: 2px solid rgba(52, 211, 153, 0.7); outline-offset: -2px; }
+
+.breadcrumbs__more { position: relative; flex-shrink: 0; }
+.breadcrumbs__toggle { padding: 5px 10px; font-size: 14px; letter-spacing: 1px; color: var(--text-60); }
+.breadcrumbs__toggle.is-open { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.breadcrumbs__popover {
+  position: absolute; top: calc(100% + 8px); left: -6px; z-index: 20;
+  min-width: 240px; max-width: min(360px, calc(100vw - 32px)); max-height: min(60vh, 420px); overflow-y: auto;
+  margin: 0; padding: 6px; list-style: none;
+  background: #0f2a35; border: 1px solid var(--card-border); border-radius: 10px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+  animation: pop-in 140ms ease;
+}
+.breadcrumbs__menu-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
+  padding: 7px 10px; border: 0; border-radius: 6px; background: transparent;
+  font-size: 12px; line-height: 16px; color: var(--text-80); text-align: left; cursor: pointer;
+}
+.breadcrumbs__menu-item:hover, .breadcrumbs__menu-item:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--text); }
+.breadcrumbs__menu-item .breadcrumbs__title { flex: 1; }
+.breadcrumbs__via { flex-shrink: 0; font-size: 10px; color: var(--text-30); }
 
 /* ---------- Коментарі (ADR-0010) ---------- */
 .comments-toggle {
@@ -378,17 +406,24 @@ button { font: inherit; color: inherit; }
 .react-flow__minimap { background: var(--bg-solid); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
 
 /* ---------- Перемикач лейауту (ADR-0014) ---------- */
-.top-right { display: flex; gap: 8px; align-items: stretch; }
 .layout-switch {
   display: flex; gap: 2px; padding: 4px;
   background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; backdrop-filter: blur(12px);
 }
 .layout-switch__option {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
   border: 0; background: transparent; font-size: 12px; line-height: 16px;
   padding: 5px 10px; border-radius: 6px; cursor: pointer; color: var(--text-40);
 }
 .layout-switch__option:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-80); }
 .layout-switch__option.is-active { background: rgba(52, 211, 153, 0.12); color: var(--text); }
+.layout-switch__icon { font-size: 13px; }
+/* Мобільний: лише іконки, квадратні кнопки (назва — в aria-label і title). */
+@media (max-width: 600px) {
+  .layout-switch__label { display: none; }
+  .layout-switch__option { width: 30px; height: 26px; padding: 0; }
+  .layout-switch__icon { font-size: 15px; }
+}
 
 /* ---------- Якорі ребер на рядках (ADR-0015) ---------- */
 .entity-link, .fin-link, .fin-chip, .comment__author, .table__name, .table__last { position: relative; }
@@ -513,9 +548,43 @@ button { font: inherit; color: inherit; }
 .ask__voice { margin-right: 6px; }
 .assistant-chat__foot { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--inset-border); }
 .assistant-chat__foot .suggestions { justify-content: flex-start; }
-/* Хлібні крихти не наповзають на перемикач лейауту й вибір користувача. */
-.react-flow__panel.top.left { right: 400px; }
-.breadcrumbs { width: fit-content; max-width: 100%; }
+/* ---------- Хедер (ADR-0022) ----------
+   Один рядок на всю ширину: крихти зліва (стискаються), дії справа. Усі елементи — 40px заввишки. */
+.react-flow__panel.topbar {
+  /* Власні відступи замість margin панелі React Flow — симетрично зліва й справа. */
+  margin: 0; top: 15px; left: 15px; right: 15px; z-index: 6;
+  display: flex; align-items: center; gap: 8px;
+  pointer-events: none; /* порожнє місце між крихтами й діями не перехоплює панорамування канвасу */
+}
+.topbar > * { pointer-events: auto; }
+.topbar .breadcrumbs { flex: 0 1 auto; width: auto; max-width: none; min-width: 0; height: 40px; }
+.topbar__actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.topbar .layout-switch, .topbar .user-switcher { height: 40px; }
+.topbar .layout-switch { align-items: center; }
+.react-flow__panel.top.center { top: 64px; } /* панель стрес-тесту — під хедером */
+
+.user-switcher { position: relative; }
+.user-switcher__avatar {
+  display: none; width: 30px; height: 30px; border-radius: 50%;
+  place-items: center; font-size: 11px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #818cf8, #60a5fa);
+}
+
+@media (max-width: 600px) {
+  .react-flow__panel.topbar { top: 10px; left: 10px; right: 10px; gap: 6px; }
+  .topbar__actions { gap: 6px; }
+  /* Крихти компактніші: на першому кроці лише іконка. */
+  .topbar .breadcrumbs { padding: 3px; }
+  .breadcrumbs > .breadcrumbs__item:first-child .breadcrumbs__title { display: none; }
+  .breadcrumbs > .breadcrumbs__item:first-child { padding: 5px 8px; }
+  .breadcrumbs__item { padding: 5px 7px; }
+  /* Користувач — круглий аватар; select прозорий поверх нього. */
+  .user-switcher { width: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+  .user-switcher__label { display: none; }
+  .user-switcher__avatar { display: grid; }
+  .user-switcher__select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .react-flow__panel.top.center { top: 58px; }
+}
 
 /* ---------- Диктування коментаря (ADR-0020) ---------- */
 .dictation {
